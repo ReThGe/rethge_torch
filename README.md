@@ -8,7 +8,8 @@ some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.
 `pip install rethge-torch`
 
 ## usage
-rethge.py includes help functions that:
-  1. utils related funcs(set seeds, choose GPU/CPU, clean CUDA cache)
-  2. 
 `from rethge_torch import rethge`
+
+rethge.py includes help functions that:
+1. utils related funcs(set seeds, choose GPU/CPU, clean CUDA cache)
+
