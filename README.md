@@ -1,8 +1,9 @@
 # rethge_torch
 This repo contains help functions to convenient pytorch using. including plot, model train &amp; evaluate, results analysis and more...
-*Those functions are using for computer vision(image classification)
-*Those functions were wrote during my learning of pytorch, it can be directly use during to DeepLearning project development, and also using for learning purpose
-*Will continuously updating
+
+* Those functions are using for computer vision(image classification)
+* Those functions were wrote during my learning of pytorch, it can be directly use during to DeepLearning project development, and also using for learning purpose
+* Will continuously updating
 
 some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.io/ by Daniel Bourke, which is high recommend to check out
 
