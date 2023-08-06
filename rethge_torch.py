@@ -1,6 +1,6 @@
 ## this file contains custom-code functions for pytorch deeplearning
 # containing model training/eval func, results/image plot func, and other help_funcs too
-# belongs to: rethge
+# author: rethge
 # created data: 2023/07/02
 
 
