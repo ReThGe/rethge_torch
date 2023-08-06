@@ -34,7 +34,7 @@ config dataset transformation:
 
 
 get everything setup quickly:
-    setup_dict = rethge.general_train_setup(Model=your_model, 
+     setup_dict = rethge.general_train_setup(Model=your_model, 
                         train_path=train_data_dir,
                         valid_path=valid_data_dir,
                         test_path=test_data_dir, # optional, if you don't have a test set, set to none
@@ -46,7 +46,7 @@ get everything setup quickly:
 'setup_dict' is a dict that contain dataloader, lr_scheduler(if needed), loss_fn, optimizing_func, classnames...
 
 and training will be like:
-    results = rethge.train_test_loop_with_amp(Model=your_model, 
+     results = rethge.train_test_loop_with_amp(Model=your_model, 
                                 train_loader=setup_dict['train_dataloader'],
                                 test_loader=setup_dict['valid_dataloader'], 
                                 epochs=100, optima=setup_dict['optima'], 
