@@ -47,7 +47,7 @@ get everything setup quickly:
                         batch_size=8, num_worker=8, epochs=100
                         )
 
-'setup_dict' is a dict that contain dataloader, lr_scheduler(if needed), loss_fn, optimizing_func, classnames...
+`setup_dict` is a dict that contain dataloader, lr_scheduler(if needed), loss_fn, optimizing_func, classnames...
 
 and training will be like:
 
@@ -64,7 +64,7 @@ and training will be like:
     rethge.plot_lr(results)
     rethge.plot_loss_curves(results)  
 
-or you can also pass a csv file into 'plot_loss_curves'
+or you can also pass a csv file into `plot_loss_curves`
 
     rethge.plot_loss_curves('results_path/xxxx.csv') 
 
@@ -75,20 +75,20 @@ or you can also pass a csv file into 'plot_loss_curves'
                                                       setup_dict['loss_fn'],
                                                       device=device)
 
-'pred_wrong_and_store' will loop through every single image in a folder and make a prediction, then gather all the results into a dataframe
+`pred_wrong_and_store` will loop through every single image in a folder and make a prediction, then gather all the results into a dataframe
 
-you can set 'show=True' and 'n=5', it will display the top 5 most-wrong predictions
+you can set `show=True` and `n=5`, it will display the top 5 most-wrong predictions
 
     pred_df = rethge.pred_wrong_and_store(path=test_path,
                                           Model=your_model,
                                           transform=transforms,
                                           class_names=setup_dict['class_name'],
-                                          n = 5
-                                          show = True
+                                          n = 5,
+                                          show = True,
                                           device=device)
 
 ## result saving
 
     rethge.save_results(results, 'saving_path/xxxx.csv')
-    rethge.save_model(model, 'saving_path/...', 'xxxx.pt') # or .pth
+    rethge.save_model(your_model, 'saving_path/...', 'xxxx.pt') # or .pth
     
