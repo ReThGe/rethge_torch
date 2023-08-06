@@ -53,3 +53,36 @@ and training will be like:
                                 scheduler=setup_dict['scheduler'], 
                                 loss_fn=setup_dict['loss_fn'], 
                                 device=device,) 
+
+## plot results
+
+    rethge.plot_lr(results)
+    rethge.plot_loss_curves(results)  
+
+or you can also pass a csv file into 'plot_loss_curves'
+
+    rethge.plot_loss_curves('results_path/xxxx.csv') 
+
+## evaluate model
+
+    loss, acc, predictions_tensor = rethge.eval_model(your_model, 
+                                                      setup_dict['test_dataloader'],
+                                                      setup_dict['loss_fn'],
+                                                      device=device)
+
+'pred_wrong_and_store' will loop through every single image in a folder and make a prediction, then gather all the results into a dataframe
+you can set 'show=True' and 'n=5', it will display the top 5 most-wrong predictions
+
+    pred_df = rethge.pred_wrong_and_store(path=test_path,
+                                          Model=your_model,
+                                          transform=transforms,
+                                          class_names=setup_dict['class_name'],
+                                          n = 5
+                                          show = True
+                                          device=device)
+
+## result saving
+
+    rethge.save_results(results, 'saving_path/xxxx.csv')
+    rethge.save_model(model, 'saving_path/...', 'xxxx.pt') # or .pth
+    
