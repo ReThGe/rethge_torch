@@ -19,11 +19,12 @@ some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.
   3. File manipulate related functions
   4. Plot related functions (loss curve, learning rate, image display...)
   5. Data load related functions
-  6. result analyze/saving functions
+  6. Result analyze/saving functions
 
 ### quick setup
 
 choose devices:
+
 `device = rethge.device_picking()`
 
 config dataset transformation:
