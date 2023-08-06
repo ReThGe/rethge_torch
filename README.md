@@ -10,6 +10,11 @@ some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.
 ## usage
 `from rethge_torch import rethge`
 
-rethge.py includes help functions that:
-1. utils related funcs(set seeds, choose GPU/CPU, clean CUDA cache)
+  rethge.py includes help functions with:
+  1. model related funcions (train/eval/test, )
+  2. Utils related funcions (set seeds, choose GPU/CPU, clean CUDA cache)
+  3. File manipulate related functions
+  4. Plot related functions (loss curve, learning rate, image display...)
+  5. Data load related functions
+  6. result analyze/saving functions
 
