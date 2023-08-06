@@ -32,7 +32,6 @@ config dataset transformation:
         transforms.ToTensor()
     ])
 
-
 get everything setup quickly:
 
      setup_dict = rethge.general_train_setup(Model=your_model, 
@@ -45,7 +44,6 @@ get everything setup quickly:
                         )
 
 'setup_dict' is a dict that contain dataloader, lr_scheduler(if needed), loss_fn, optimizing_func, classnames...
-
 and training will be like:
 
      results = rethge.train_test_loop_with_amp(Model=your_model, 
