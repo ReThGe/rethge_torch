@@ -48,6 +48,7 @@ get everything setup quickly:
                         )
 
 'setup_dict' is a dict that contain dataloader, lr_scheduler(if needed), loss_fn, optimizing_func, classnames...
+
 and training will be like:
 
      results = rethge.train_test_loop_with_amp(Model=your_model, 
@@ -75,6 +76,7 @@ or you can also pass a csv file into 'plot_loss_curves'
                                                       device=device)
 
 'pred_wrong_and_store' will loop through every single image in a folder and make a prediction, then gather all the results into a dataframe
+
 you can set 'show=True' and 'n=5', it will display the top 5 most-wrong predictions
 
     pred_df = rethge.pred_wrong_and_store(path=test_path,
