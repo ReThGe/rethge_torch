@@ -2,7 +2,7 @@
 This repo contains help functions to convenient pytorch using. including plot, model train &amp; evaluate, results analysis and more...
 
 * Those functions are using for computer vision(image classification)
-* Those functions were wrote during my learning of pytorch, it can be directly use during to DeepLearning project development, and also using for learning purpose
+* Those functions were wrote during my learning of pytorch, it can be directly use during DeepLearning project development, and also using for learning purpose
 * Will continuously updating
 
 some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.io/ by Daniel Bourke, which is high recommend to check out
@@ -41,7 +41,7 @@ get everything setup quickly:
                         train_path=train_data_dir,
                         valid_path=valid_data_dir,
                         test_path=test_data_dir, # optional, if you don't have a test set, set to none
-                        transform=transforms, # 
+                        transform=transforms, 
                         test_transform = test_transforms, # if no test set, this is also set to none
                         batch_size=8, num_worker=8, epochs=100
                         )
