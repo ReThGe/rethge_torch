@@ -5,7 +5,7 @@ This repo contains help functions for pytorch. including plot, model train &amp;
 * Those functions were wrote during my learning of pytorch, it can be directly use during DeepLearning project development, and also using for learning purpose
 * Will continuously updating
 
-some of funcs were adapted from this awesome tutorial: https://www.learnpytorch.io/ by Daniel Bourke, which is high recommend to check out
+some of functions were adapted from this awesome tutorial: https://www.learnpytorch.io/ by Daniel Bourke, which is highly recommend to check out
 
 ## install
 `pip install rethge-torch`
