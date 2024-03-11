@@ -16,16 +16,16 @@ class RTG_depthwise_separable_conv(nn.Module):
                  stride, padding, bias: bool = True):
         super().__init__()
 
-        self.dsc = nn.Sequential(
-            nn.Conv2d(in_channels=input_size, 
+        self.dsc = nn.Sequential( 
+            nn.Conv2d(in_channels=input_size, # depth-wise
                                     out_channels=input_size,
                                     kernel_size=kernel_size,
                                     stride=stride,
                                     padding=padding,
                                     groups=input_size,
-                                    bias=bias),
+                                    bias=bias), 
 
-            nn.Conv2d(in_channels=input_size,
+            nn.Conv2d(in_channels=input_size, # point-wise
                                         out_channels=output_size,
                                         kernel_size=1,
                                         stride=1,
@@ -49,7 +49,7 @@ class RTG_res_block(nn.Module):
                                                   stride=1,padding=1)
         
     def forward(self, x):
-        return F.selu(self.conv2(F.selu(self.conv1(x))) + x)
+        return F.selu(self.conv2(F.selu(self.conv1(x))) + x) # if using concat, we are adding channles
 
 
 class RTG_res_block_expand(nn.Module):
@@ -67,10 +67,87 @@ class RTG_res_block_expand(nn.Module):
                                   stride=1, padding=0)
         
     def forward(self, x):
-        a = self.conv2(F.selu(self.conv1(x)))
+        a = self.conv2(F.selu(self.conv1(x))) # (1, 64, 18, 18)
         identity = self.identity(x)
 
         return F.selu(a + identity)
+
+
+class RTG_inverted_res(nn.Module):
+    def __init__(self, nin, exp_size, kernel_size):
+        super().__init__()
+        self.nin = nin
+        self.exp_size = exp_size
+        self.kernel_size = kernel_size
+
+        self.exp_step = nn.Sequential(
+            nn.Conv2d(in_channels=self.nin, out_channels=self.exp_size, kernel_size=1), # upper the channel dim
+            nn.SELU(),
+            nn.Conv2d(in_channels=self.exp_size, out_channels=self.exp_size, kernel_size=self.kernel_size, padding="same", groups=self.exp_size), # depth-wise
+            nn.SELU(),
+            nn.Conv2d(in_channels=self.exp_size, out_channels=self.nin, kernel_size=1) # point-wise
+        )
+
+    def forward(self, x):
+        return F.selu((x + self.exp_step(x)))
+
+
+class RTG_squeeze_excitation(nn.Module):
+    def __init__(self, in_channel, reduce_channel=8) -> None:
+        super().__init__()
+
+        self.body = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1,1)), # b, c, 1x1
+            nn.Conv2d(in_channels=in_channel, out_channels=reduce_channel, kernel_size=1),
+            nn.SiLU(),
+            nn.Conv2d(in_channels=reduce_channel, out_channels=in_channel, kernel_size=1),
+            nn.Softmax(dim=1) # c
+            )
+        
+    def forward(self, x):
+        return x*self.body(x)
+    
+
+class RTG_channel_attention(nn.Module): 
+    def __init__(self, in_channel, reduce_to):
+        super().__init__()
+
+        self.channel_block = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(in_channels=in_channel, out_channels=reduce_to, kernel_size=1, bias=False),
+            nn.SiLU(),
+            nn.Conv2d(in_channels=reduce_to, out_channels=in_channel, kernel_size=1, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        return self.channel_block(x)
+
+class RTG_spatial_attention(nn.Module): 
+    def __init__(self):
+        super().__init__()
+
+        self.spatial_block = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, padding=1, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True) # take mean at channel dim, -> (batch, h, w)
+        x = self.spatial_block(avg_out)
+        return x
+    
+
+class RTG_channel_spatial_attention(nn.Module):
+    def __init__(self, nin, reduce_to) -> None:
+        super().__init__()
+
+        self.channel_block = RTG_channel_attention(in_channel=nin, reduce_to=reduce_to)
+        self.spatial_block = RTG_spatial_attention()
+
+    def forward(self, x):
+        return (x * self.channel_block(x)) * self.spatial_block(x)
+
 
 # ViT————————————————————————————————————————————————————————————————————
 
@@ -360,3 +437,94 @@ class RTG_Resnet(nn.Module):
     
 def RTG_Resnet50(img_c=3, num_class=3):
     return RTG_Resnet(Block, [3,4,6,3], img_c, num_class)
+
+
+# YOLOv1——————————————————————————————————————————————————————————————————————————————————————————————————————
+arch_cfg = [
+    (7, 64, 2, 3), # kernel_size, num_filter, stride, padding
+    "M", # MaxPooling
+    (3, 192, 1, 1),
+    "M",
+    (1,128,1,0),
+    (3,256,1,1),
+    (1,256,1,0),
+    (3,512,1,1),
+    "M",
+    [(1,256,1,0), (3,512,1,1), 4],
+    (1,512,1,0),
+    (3,1024,1,1),
+    "M",
+    [(1,512,1,0), (3,1024,1,1), 2],
+    (3,1024,1,1),
+    (3,1024,2,1),
+    (3,1024,1,1),
+    (3,1024,1,1),
+]
+
+class CNNBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, **kwargs) -> None:
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
+        self.BN = nn.BatchNorm2d(num_features=out_channels)
+        self.leakrelu = nn.LeakyReLU(0.1)
+
+    def forward(self, x):
+        return self.leakrelu(self.BN(self.conv(x)))
+    
+class Yolov1(nn.Module):
+    """
+    model = Yolov1(split_size=S, num_boxes=B, num_classes=C)
+    """
+    def __init__(self, in_channels=3, **kwargs) -> None:
+        super().__init__()
+        self.arch = arch_cfg
+        self.in_channels = in_channels
+        self.darknet = self._create_conv_layers(self.arch)
+        self.fc = self._create_fc(**kwargs)
+
+    def forward(self, x):
+        x = self.darknet(x)
+        return self.fc(torch.flatten(x, start_dim=1)) # (32, 64, 56, 56)
+    
+    def _create_conv_layers(self, arch):
+        layers = []
+        in_channels = self.in_channels
+
+        for x in arch:
+            if type(x) == tuple:
+                layers += [CNNBlock(in_channels, out_channels=x[1], 
+                                   kernel_size=x[0], stride=x[2],
+                                   padding=x[3])]
+                in_channels = x[1]
+            elif type(x) == str:
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+
+            elif type(x) == list: 
+                conv1 = x[0] # [(1,256,1,0), (3,512,1,1), 4]
+                conv2 = x[1]
+                num_repeats = x[2]
+
+                for _ in range(num_repeats):
+                    layers += [
+                        CNNBlock(in_channels, conv1[1], kernel_size=conv1[0],
+                                 stride=conv1[2], padding=conv1[3])
+                    ]
+                    layers += [
+                        CNNBlock(conv1[1], conv2[1], kernel_size=conv2[0],
+                                 stride=conv2[2], padding=conv2[3])
+                    ]
+
+                    in_channels = conv2[1]
+        return nn.Sequential(*layers)
+    
+    def _create_fc(self, split_size, num_boxes, num_classes):
+        S, B, C = split_size, num_boxes, num_classes
+        return nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(1024*S*S, 496), # 4960 too slow
+            nn.Dropout(0.2), # 0.5
+            nn.LeakyReLU(0.1),
+            nn.Linear(496, S*S*(C+B*5)), # for example, reshape to 7x7x30
+        )
+    
+    # model = Yolov1(split_size=S, num_boxes=B, num_classes=C)
