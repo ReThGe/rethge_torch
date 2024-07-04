@@ -435,7 +435,6 @@ class LinetV2_fast(nn.Module): # 3, batch, 224, 224
         return self.clf(self.res_body(self.head(x)))
     
 
-
 class LinetV2_faster(nn.Module): # 3, batch, 224, 224
     def __init__(self, nin=3, nout=3):
         super().__init__()

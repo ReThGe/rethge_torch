@@ -17,7 +17,7 @@ from torchvision import datasets, transforms
 import math
 import pandas as pd
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 from skimage import io
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -408,6 +408,130 @@ class En_De_cryption():
             plain_text += self.char[index]
 
         return plain_text
+    
+
+def visualize_feat_map():
+## this is an idea about how to visualize feature map:
+## 1. get image and a model: 
+            # model_path = "..."
+            # img_idx = "a3"
+            # image_path = f"E:\DeepLearning\\3_picked_demo_image\\{img_idx}.jpg"
+            # model = torch.load(model_path)
+
+            # all_child = list(model.children()) # len = 4 
+            # type(all_child[0])
+    
+## 2. transform:
+            # m_transform = mtransforms = transforms.Compose([
+            #     transforms.Resize(size=(224, 224)),
+            #     transforms.ToTensor()
+            # ])
+
+            # img = Image.open(image_path)
+            # img = m_transform(img) # torch.Size([3, 224, 224])
+            # img = np.asarray(img)
+            # img = torch.from_numpy(img)
+            # plt.imshow(img.permute(1,2,0))
+            # img = img.unsqueeze(0) # torch.Size([1, 3, 224, 224])
+            # img = img.to(device)
+    
+            # results = [all_child[0](img)]
+            # for i in range(1, len(all_child)):
+            #     results.append(all_child[i](results[-1]))
+    
+## 3. visualize:
+            # plt.figure(figsize=(100, 50))
+            # layer_viz = results[1].squeeze()
+            # print("Stage: 2")
+            # for i, f in enumerate(layer_viz):
+            #     plt.subplot(4, 8, i + 1)
+            #     plt.imshow(f.detach().cpu().numpy())
+            #     plt.axis("off")
+            # plt.show()
+            # plt.close()
+    return 
+    
+    
+class RTG_Occuluder:
+    """occulder = RTG_Occuluder(img_path=image_path, 
+                                n_patches=n_patches, transforms=m_transform, device=device) # 8x8=64, patch size = 150x150
+        img_container = occulder.generate_occlusion(mode="PIL")
+        occulder.plot_occlusion(img_container)"""
+    def __init__(self, img_path: str, n_patches: int, transforms, device) -> None:
+        self.img_path = img_path
+        self.device = device
+        self.img = Image.open(self.img_path)
+        self.n_patches = n_patches
+        self.transforms = transforms
+        self.occulusion_size = self.img.size[0] // self.n_patches # 120 
+
+
+    def batch_single_img(self, img, show=False):
+        img = self.transforms(img) # torch.Size([3, 224, 224])
+        if show:
+            plt.imshow(img.permute(1,2,0))
+        img = img.unsqueeze(0) # torch.Size([1, 3, 224, 224])
+        img = img.to(self.device)
+        # print(f"the image has shape: {img.shape}")
+        
+        return img
+
+
+    def generate_occlusion(self, mode, color: str="black"):
+        if mode == "PIL":
+            img_container = []
+            for i in range(self.n_patches):
+                for j in range(self.n_patches):
+                    img = Image.open(self.img_path)
+                    draw = ImageDraw.Draw(img)
+                    draw.rectangle((j*self.occulusion_size, i*self.occulusion_size, 
+                                    (j+1)*self.occulusion_size, (i+1)*self.occulusion_size), fill=color)
+                    temp_img = self.batch_single_img(img)
+                    img_container.append(temp_img)
+
+            return img_container
+        
+        elif mode == "batched":
+            img_container = []
+            # img = Image.open(self.img_path)
+            # img = self.batch_single_img(img)
+            occulusion_size = img.shape[2] // self.n_patches
+            for i in range(self.n_patches):
+                for j in range(self.n_patches):
+                    # img = Image.open(self.img_path)
+                    img = self.batch_single_img(self.img)
+                    img[0, :, i*self.occulusion_size:(i+1)*self.occulusion_size, 
+                        j*self.occulusion_size:(j+1)*self.occulusion_size] = 0.
+                    img_container.append(img)
+            return img_container
+    
+    def plot_occlusion(self, img_container):
+        plt.figure(figsize=(50, 50))
+        for i, f in enumerate(img_container):
+            plt.subplot(self.n_patches, self.n_patches, i+1)
+            plt.imshow(img_container[i].squeeze(dim=0).detach().cpu().permute(1,2,0))
+            plt.axis("off")
+        plt.show()
+        plt.close()
+
+    def get_result(self, img_container, model, mode="logits"):
+        rst_matrix = torch.randn(self.n_patches*self.n_patches).to(self.device)
+        model.eval()
+        for i, img in enumerate(img_container):
+            with torch.inference_mode(): 
+                if mode == "raw":                
+                    rst = model(img)
+                elif mode == "logits":
+                    rst = torch.softmax(model(img), dim=1)
+                else:
+                    print("mode can only be 'raw' or 'logits'.")
+            rst = rst.squeeze(0)
+            rst_matrix[i] = rst[0]
+        rst_matrix = rst_matrix.reshape((self.n_patches,self.n_patches)).cpu().numpy()
+
+        return rst_matrix
+
+
 # ————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -1234,7 +1358,7 @@ def train_step(Model: torch.nn.Module,
     # batch       
         X, y = X.to(device), y.to(device)
 
-        y_pred_t = Model(X) 
+        y_pred_t = Model(X) # i wonder if this place needs softmax to cal the loss? -- no need
         loss_t = loss_fn(y_pred_t, y)
         loss_t.backward()
         optima.step() # updata params per batch, not per epoch

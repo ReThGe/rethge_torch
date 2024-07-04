@@ -123,6 +123,7 @@ class RTG_channel_attention(nn.Module):
     def forward(self, x):
         return self.channel_block(x)
 
+
 class RTG_spatial_attention(nn.Module): 
     def __init__(self):
         super().__init__()
@@ -434,7 +435,8 @@ class RTG_Resnet(nn.Module):
             layers.append(block(self.in_c, out_channels))
 
         return nn.Sequential(*layers)
-    
+
+
 def RTG_Resnet50(img_c=3, num_class=3):
     return RTG_Resnet(Block, [3,4,6,3], img_c, num_class)
 
@@ -470,6 +472,7 @@ class CNNBlock(nn.Module):
 
     def forward(self, x):
         return self.leakrelu(self.BN(self.conv(x)))
+ 
     
 class Yolov1(nn.Module):
     """
